@@ -1,4 +1,18 @@
 
+
+class ClassConditionalBatchNorm2d(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.bn = torch.nn.BatchNorm2d(out_channels)
+        self.class_scale_transform = nn.utils.spectral_norm(nn.Linear(in_channels, out_channels, bias=False))
+        self.class_shift_transform = nn.utils.spectral_norm(nn.Linear(in_channels, out_channels, bias=False))
+    def forward(self, x, y):
+        normalized_image = self.bn(x)
+        class_scale = (1 + self.class_scale_transform(y))[:, :, None, None]
+        class_shift = self.class_shift_transform(y)[:, :, None, None]
+        transformed_image = class_scale * normalized_image + class_shift
+        return transformed_image
+        
 class Generator(nn.Module):
     def __init__(self, base_channels=64, bottom_width=4, z_dim=120, shared_dim=128, n_classes=n_classes, channel=channel):
         super().__init__()
